@@ -73,64 +73,54 @@ function sectionCount(n, m) {
 }
 
 function scheduleHtmlParser(html) {
-  // CNU section time
-  const CNUstartTime = ["08:00", "08:50", "09:40", "10:40", "11:30", "13:30", "14:20", "15:10", "16:00", "16:50", "18:30", "19:20", "20:10"];
-  const CNUendTime   = ["08:40", "09:30", "10:20", "11:20", "12:10", "14:10", "15:00", "15:50", "16:40", "17:30", "19:10", "20:00", "20:50"];
-  let CNUsectionTime = [];
+  // Generate CNU section time table
+  let sectionTime = [];
+  const startTime = ["08:00", "08:50", "09:40", "10:40", "11:30", "13:30", "14:20", "15:10", "16:00", "16:50", "18:30", "19:20", "20:10"];
+  const endTime   = ["08:40", "09:30", "10:20", "11:20", "12:10", "14:10", "15:00", "15:50", "16:40", "17:30", "19:10", "20:00", "20:50"];
   for(let i=0; i<13; i++){
-    CNUsectionTime.push({
-      "section": i+1,
-      "startTime": CNUstartTime[i],
-      "endTime": CNUendTime[i]
+    sectionTime.push({
+      "section": i + 1,
+      "startTime": startTime[i],
+      "endTime": endTime[i]
     });
   }
 
+  // Parse html
   let result = [];
   let table = html.substring(html.indexOf("<tbody>"));
   let queue = table.split('</td>');
-  let weekNow = 0, dayNow = 0;
-  let arranged = [];
 
-  for(let i=0; i<8; i++){
-      arranged[i] = [];
-      for(let j=0; j<14; j++)
-        arranged[i][j] = false;
-  }
-  for(let i=0; i<queue.length; i++){
-    if(queue[i].indexOf('<font size="2px">') != -1 || dayNow > 7){
-      weekNow++;// = ~~(queue[i].substring(queue[i].indexOf('<font size="2px">'), queue[i].indexOf('</font>')).split(' ')[2]);
-      dayNow = 0;
+  for(i of queue) {
+    // console.log(i);
+    if(i.indexOf('id="') > -1  && i.indexOf('title="') > -1) {
+      let td = i.split('id="')[1].split('"')[0]; // TD12_0
+      let id = ~~td.split('TD')[1].split('_')[0]; // 12
+      let chapters = ~~i.split('rowspan="')[1].split('"')[0];
+      let title = i.split('title="')[1].split('"')[0];
+      // console.log(~~ (id / 13) + 1, id % 13 + 1, chapters, title);
+      let ans = classParser(title);
+      let lastPosition = ans.position;
+      ans.day = (~~ (id / 13) + 1).toString();
+      ans.sections = sectionCount(id % 13 + 1, chapters);
+      console.log(ans);
+      result.push(ans);
 
-    }else if(queue[i].indexOf('title=') != -1){ //遍历有内容
-      while(arranged[dayNow][weekNow]){ //如果占满了就往后安排
-        dayNow++;
-      }
-      if(dayNow > 7) continue;
-      
-      let chapters = ~~queue[i].substring(queue[i].indexOf('rowspan=')).split('"')[1];
-      let title = queue[i].substring(queue[i].indexOf('title=')).split('"')[1];
-      
-      for(let j=0; j<chapters; j++)
-        arranged[dayNow][weekNow+j] = true;
-      
-      let cur = classParser(title);
-      cur.day = dayNow.toString();
-      cur.sections = sectionCount(weekNow, chapters);
-      result.push(cur);
-      //console.log(dayNow, weekNow, cur);
-
-      if(patch('(', title) > 3){
-        cur = classParser(nextClass(title));
-        cur.day = dayNow.toString();
-        cur.sections = sectionCount(weekNow, chapters);
-        result.push(cur);
-        //console.log(dayNow, weekNow, cur);
+      // Complicated Courses
+      while(patch('(', title) > 3){
+        title = nextClass(title);
+        let ans = classParser(title);
+        if(ans.position == "未知" && lastPosition != "未知") {
+          ans.position =  lastPosition;
+        }
+        ans.day = (~~ (id / 13) + 1).toString();
+        ans.sections = sectionCount(id % 13 + 1, chapters);
+        console.log(ans);
+        result.push(ans);
       }
     }
-    dayNow++;
   }
   return {
     courseInfos: result,
-    sectionTimes: CNUsectionTime
+    sectionTimes: sectionTime
   }
 }
