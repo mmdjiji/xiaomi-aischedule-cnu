@@ -40,8 +40,13 @@ function classParser(src) {
   let parse = src.split("(");
   result.name = parse[0];
   result.teacher = parse[2].split(')')[0];
-  result.weeks = weekParser(parse[3].split(',')[0]);
-  result.position = parse[3].split(',')[1].split(')')[0];
+  if(parse[3].indexOf(',') > -1) {
+    result.weeks = weekParser(parse[3].split(',')[0]);
+    result.position = parse[3].split(',')[1].split(')')[0];
+  } else {
+    result.weeks = weekParser(parse[3].split(')')[0]);
+    result.position = "未知";
+  }
   return result;
 }
 
