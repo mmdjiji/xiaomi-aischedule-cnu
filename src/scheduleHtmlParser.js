@@ -106,7 +106,7 @@ function scheduleHtmlParser(html) {
       result.push(ans);
 
       // Complicated Courses
-      while(patch('(', title) > 3){
+      while(patch('(', title) > 3) {
         title = nextClass(title);
         let ans = classParser(title);
         if(ans.position == "未知" && lastPosition != "未知") {
