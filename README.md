@@ -4,8 +4,6 @@
 
 本项目在于为首都师范大学适配小爱课程表，支持从教务系统一键导入课表。
 
-目前采用的教务系统链接为校内地址，所以请在校园内网中使用导入功能。
-
 Author: [mmdjiji](https://mmdjiji.com). All rights reserved.
 
 ## src
